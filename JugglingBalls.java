@@ -13,31 +13,27 @@ public class JugglingBalls {
 
     public JugglingBalls(int numBalls, int maxHeight) {
 
-        currState = (int) Math.pow(2, numBalls) - 1;
         MAX_HEIGHT = maxHeight;
         NUM_BALLS = numBalls;
 
         hm = new HashMap<>();
 
-        int numCombinations = (int) Math.pow(2, maxHeight);
+        currState = (1 << numBalls) - 1;
+        int endState = ((1 << numBalls) - 1) << (MAX_HEIGHT - NUM_BALLS);
 
-        for (int i = 0; i < numCombinations; i++) {
+        for (int i = currState; i <= endState; i++) {
             if (Integer.bitCount(i) == numBalls) {
-                String sub = String.format("%" + maxHeight + "s", Integer.toBinaryString(i >> 1)).replace(' ', '0');
-
                 HashMap<Integer, Integer> subHM = new HashMap<>();
 
-                if (Integer.numberOfTrailingZeros(i) > 0) { //checks if last element is empty
-                    subHM.put(0, Integer.parseInt(sub, 2));
+                if ((i & 1) == 0) { //checks if last element is empty
+                    subHM.put(0, i >> 1);
                     hm.put(i, subHM);
                     continue;
                 }
 
                 for (int j = 0; j < maxHeight; j++) {
-                    if (sub.charAt(j) == '0') {
-                        String subsub = sub.substring(0, j) + "1" + sub.substring(j + 1);
-
-                        subHM.put(maxHeight - j, Integer.parseInt(subsub, 2));
+                    if (((i >> 1) & (1 << j)) == 0) {
+                        subHM.put(j + 1, i >> 1 | (1 << j));
                     }
                 }
 
@@ -46,8 +42,7 @@ public class JugglingBalls {
                 }
             }
         }
-        System.out.println();
-
+        System.out.println("e");
     }
 
     public static void main(String[] args) {
@@ -120,38 +115,28 @@ public class JugglingBalls {
     }
 
     ArrayList<ArrayList<Integer>> states = new ArrayList<>();
-    ArrayList<ArrayList<Integer>> tosses = new ArrayList<>();
 
     public void findAllCombinations() {
         ArrayList<Integer> statesVisited = new ArrayList<>();
-        ArrayList<Integer> tossesVisited = new ArrayList<>();
-
 
         statesVisited.add(currState);
-        tossesVisited.add(-1);
-
 
         for (Map.Entry<Integer, Integer> entry : hm.get(currState).entrySet()) {
             int finalState = entry.getValue();
             ArrayList<Integer> newStateVisited = new ArrayList<>(statesVisited);
-            ArrayList<Integer> newTossVisited = new ArrayList<>(tossesVisited);
 
-
-            findAllCombinations(finalState, newStateVisited, newTossVisited);
+            findAllCombinations(finalState, newStateVisited);
         }
 
         System.out.println("Finished!");
     }
 
-    public void findAllCombinations(int state, ArrayList<Integer> statesVisited, ArrayList<Integer> tossesVisited) {
-
-        int toss = Math.getExponent(state - (statesVisited.getLast() >> 1)) + 1;
-
-        tossesVisited.add(toss);
+    public void findAllCombinations(int state, ArrayList<Integer> statesVisited) {
 
         if (state == currState) {
+            statesVisited.add(state);
+
             states.add(statesVisited);
-            tosses.add(tossesVisited);
             return;
         }
 
@@ -164,9 +149,8 @@ public class JugglingBalls {
         for (Map.Entry<Integer, Integer> entry : hm.get(state).entrySet()) {
             int finalState = entry.getValue();
             ArrayList<Integer> newStateVisited = new ArrayList<>(statesVisited);
-            ArrayList<Integer> newTossVisited = new ArrayList<>(tossesVisited);
 
-            findAllCombinations(finalState, newStateVisited, newTossVisited);
+            findAllCombinations(finalState, newStateVisited);
         }
     }
 
